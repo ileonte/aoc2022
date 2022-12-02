@@ -30,4 +30,5 @@ pub fn build(b: *std.build.Builder) !void {
     const mode = b.standardReleaseOptions();
 
     try build_day("day01", b, target, mode);
+    try build_day("day02", b, target, mode);
 }
