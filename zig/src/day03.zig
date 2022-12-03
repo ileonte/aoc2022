@@ -18,16 +18,9 @@ fn getPrio(v: u8) u8 {
 }
 
 fn getGroup(reader: *Reader, ret: *Group) bool {
-    var v1 = reader.*.readUntilDelimiterOrEof(&ret.*[3], '\n') catch return false;
-    var v2 = reader.*.readUntilDelimiterOrEof(&ret.*[4], '\n') catch return false;
-    var v3 = reader.*.readUntilDelimiterOrEof(&ret.*[5], '\n') catch return false;
-
-    if (v1 == null or v2 == null or v3 == null) return false;
-
-    ret.*[0] = v1.?;
-    ret.*[1] = v2.?;
-    ret.*[2] = v3.?;
-
+    ret.*[0] = (reader.*.readUntilDelimiterOrEof(&ret.*[3], '\n') catch return false) orelse return false;
+    ret.*[1] = (reader.*.readUntilDelimiterOrEof(&ret.*[4], '\n') catch return false) orelse return false;
+    ret.*[2] = (reader.*.readUntilDelimiterOrEof(&ret.*[5], '\n') catch return false) orelse return false;
     return true;
 }
 
@@ -76,8 +69,6 @@ pub fn main() !void {
     var part2: int = 0;
     var reader: Reader = std.io.getStdIn().reader();
     var group: Group = undefined;
-
-    print("{}\n", .{@sizeOf(Group)});
 
     while (true) {
         if (!getGroup(&reader, &group)) break;
