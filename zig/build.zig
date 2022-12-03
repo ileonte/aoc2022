@@ -31,4 +31,5 @@ pub fn build(b: *std.build.Builder) !void {
 
     try build_day("day01", b, target, mode);
     try build_day("day02", b, target, mode);
+    try build_day("day03", b, target, mode);
 }
