@@ -1,6 +1,6 @@
 const std = @import("std");
 const print = std.debug.print;
-const Reader = std.fs.File.Reader;
+const expect = std.testing.expect;
 
 const int = u64;
 
@@ -17,10 +17,10 @@ fn getPrio(v: u8) u8 {
     };
 }
 
-fn getGroup(reader: *Reader, ret: *Group) bool {
-    ret.*[0] = (reader.*.readUntilDelimiterOrEof(&ret.*[3], '\n') catch return false) orelse return false;
-    ret.*[1] = (reader.*.readUntilDelimiterOrEof(&ret.*[4], '\n') catch return false) orelse return false;
-    ret.*[2] = (reader.*.readUntilDelimiterOrEof(&ret.*[5], '\n') catch return false) orelse return false;
+fn getGroup(reader: anytype, ret: *Group) bool {
+    ret.*[0] = (reader.readUntilDelimiterOrEof(&ret.*[3], '\n') catch return false) orelse return false;
+    ret.*[1] = (reader.readUntilDelimiterOrEof(&ret.*[4], '\n') catch return false) orelse return false;
+    ret.*[2] = (reader.readUntilDelimiterOrEof(&ret.*[5], '\n') catch return false) orelse return false;
     return true;
 }
 
@@ -67,14 +67,36 @@ fn computePart2(group: *const Group) int {
 pub fn main() !void {
     var part1: int = 0;
     var part2: int = 0;
-    var reader: Reader = std.io.getStdIn().reader();
+    var reader = std.io.getStdIn().reader();
     var group: Group = undefined;
 
     while (true) {
-        if (!getGroup(&reader, &group)) break;
+        if (!getGroup(reader, &group)) break;
         part1 += computePart1(&group);
         part2 += computePart2(&group);
     }
 
     print("{}\n{}\n", .{part1, part2});
+}
+
+test {
+    var test_data =
+        \\vJrwpWtwJgWrhcsFMMfFFhFp
+        \\jqHRNqRjqzjGDLGLrsFMfFZSrLrFZsSL
+        \\PmmdzqPrVvPwwTWBwg
+        \\wMqvLMZHhHMvwLHjbvcjnnSBnvTQFn
+        \\ttgJtRGJQctTZtZT
+        \\CrZsJsPPZsGzwwsLwLmpwMDw
+    ;
+    var stream = std.io.fixedBufferStream(test_data);
+    var reader = stream.reader();
+    var group1: Group = undefined;
+    var group2: Group = undefined;
+
+    try expect(getGroup(reader, &group1));
+    try expect(getGroup(reader, &group2));
+
+    try expect(computePart1(&group1) + computePart1(&group2) == 157);
+    try expect(computePart2(&group1) == 18);
+    try expect(computePart2(&group2) == 52);
 }
