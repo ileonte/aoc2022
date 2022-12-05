@@ -1,47 +1,39 @@
 const std = @import("std");
 
-const Package = struct {name: [] const u8, path: [] const u8};
-const packages = [_]Package{
-    .{ .name = "aoc", .path = "lib/aoc/aoc.zig" },
+const packages = struct {
+    const aoc = std.build.Pkg {
+        .name = "aoc",
+        .source = .{ .path = "./lib/aoc/aoc.zig" },
+    };
 };
 
-fn build_day(comptime name : []const u8, b: *std.build.Builder, target: std.zig.CrossTarget, mode: std.builtin.Mode) !void {
-    const path = "src/" ++ name ++ ".zig";
-
-    var exe = b.addExecutable(name, path);
-    exe.setTarget(target);
-    exe.setBuildMode(mode);
-    for (packages) |pkg| {
-        exe.addPackagePath(pkg.name, pkg.path);
-    }
-    exe.install();
-
-    var run_cmd = exe.run();
-    run_cmd.step.dependOn(b.getInstallStep());
-    if (b.args) |args| {
-        run_cmd.addArgs(args);
-    }
-
-    var run_step = b.step("run " ++ name, "Run " ++ name);
-    run_step.dependOn(&run_cmd.step);
-
-    var exe_tests = b.addTest(path);
-    exe_tests.setTarget(target);
-    exe_tests.setBuildMode(mode);
-    for (packages) |pkg| {
-        exe_tests.addPackagePath(pkg.name, pkg.path);
-    }
-
-    var test_step = b.step("test " ++ name, "Run unit tests for " ++ name);
-    test_step.dependOn(&exe_tests.step);
-}
+const days = [_][] const u8 {
+    "day01", "day02", "day03", "day04", "day05",
+    "day06", "day07", "day08", "day09", "day10",
+    "day11", "day12", "day13", "day14", "day15",
+    "day16", "day17", "day18", "day19", "day20",
+    "day21", "day22", "day23", "day24", "day25",
+};
 
 pub fn build(b: *std.build.Builder) !void {
     const target = b.standardTargetOptions(.{});
     const mode = b.standardReleaseOptions();
 
-    try build_day("day01", b, target, mode);
-    try build_day("day02", b, target, mode);
-    try build_day("day03", b, target, mode);
-    try build_day("day04", b, target, mode);
+    inline for (days) |name| {
+        const path = "./src/" ++ name ++ ".zig";
+
+        var exe = b.addExecutable(name, path);
+        exe.addPackage(packages.aoc);
+        exe.setTarget(target);
+        exe.setBuildMode(mode);
+        exe.install();
+
+        var exe_tests = b.addTest(path);
+        exe_tests.addPackage(packages.aoc);
+        exe_tests.setTarget(target);
+        exe_tests.setBuildMode(mode);
+
+        var test_step = b.step(name ++ "-test", "Run unit tests for " ++ name);
+        test_step.dependOn(&exe_tests.step);
+    }
 }

@@ -1,6 +1,7 @@
 const std = @import("std");
 const print = std.debug.print;
 const expect = std.testing.expect;
+const aoc = @import("aoc");
 
 const int = u64;
 
@@ -17,10 +18,10 @@ fn getPrio(v: u8) u8 {
     };
 }
 
-fn getGroup(reader: anytype, ret: *Group) bool {
-    ret.*[0] = (reader.readUntilDelimiterOrEof(&ret.*[3], '\n') catch return false) orelse return false;
-    ret.*[1] = (reader.readUntilDelimiterOrEof(&ret.*[4], '\n') catch return false) orelse return false;
-    ret.*[2] = (reader.readUntilDelimiterOrEof(&ret.*[5], '\n') catch return false) orelse return false;
+fn getGroup(stream: aoc.Stream, ret: *Group) bool {
+    ret.*[0] = (stream.readUntilDelimiterOrEof(&ret.*[3], '\n') catch return false) orelse return false;
+    ret.*[1] = (stream.readUntilDelimiterOrEof(&ret.*[4], '\n') catch return false) orelse return false;
+    ret.*[2] = (stream.readUntilDelimiterOrEof(&ret.*[5], '\n') catch return false) orelse return false;
     return true;
 }
 
@@ -67,11 +68,12 @@ fn computePart2(group: *const Group) int {
 pub fn main() !void {
     var part1: int = 0;
     var part2: int = 0;
-    var reader = std.io.getStdIn().reader();
+    var in_stream = std.io.getStdIn();
+    var stream = aoc.Stream.initFile(&in_stream);
     var group: Group = undefined;
 
     while (true) {
-        if (!getGroup(reader, &group)) break;
+        if (!getGroup(stream, &group)) break;
         part1 += computePart1(&group);
         part2 += computePart2(&group);
     }
@@ -88,13 +90,13 @@ test {
         \\ttgJtRGJQctTZtZT
         \\CrZsJsPPZsGzwwsLwLmpwMDw
     ;
-    var stream = std.io.fixedBufferStream(test_data);
-    var reader = stream.reader();
+    var in_stream = std.io.fixedBufferStream(test_data);
+    var stream = aoc.Stream.initMem(&in_stream);
     var group1: Group = undefined;
     var group2: Group = undefined;
 
-    try expect(getGroup(reader, &group1));
-    try expect(getGroup(reader, &group2));
+    try expect(getGroup(stream, &group1));
+    try expect(getGroup(stream, &group2));
 
     try expect(computePart1(&group1) + computePart1(&group2) == 157);
     try expect(computePart2(&group1) == 18);

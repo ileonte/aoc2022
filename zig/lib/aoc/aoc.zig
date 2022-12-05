@@ -1,37 +1,66 @@
 const std = @import("std");
 
-pub const Reader = struct {
+pub const Stream = struct {
     pub const Type = enum {
         File,
         Memory,
     };
 
     type: Type,
-    file_reader: ?std.fs.File.Reader,
-    mem_reader: ?std.io.FixedBufferStream([] const u8).Reader,
+    file: ?*std.fs.File,
+    mem: ?*std.io.FixedBufferStream([] const u8),
 
     const Self = @This();
 
     pub fn initFile(file: *std.fs.File) Self {
         return .{
             .type = .File,
-            .file_reader = file.reader(),
-            .mem_reader = null,
+            .file = file,
+            .mem = null,
         };
     }
 
     pub fn initMem(mem: *std.io.FixedBufferStream([] const u8)) Self {
         return .{
             .type = .Memory,
-            .file_reader = null,
-            .mem_reader = mem.reader()
+            .file = null,
+            .mem = mem,
         };
     }
 
-    pub fn readUntilDelimiterOrEof(self: *Self, buf: []u8, delimiter: u8) !?[]u8 {
+    pub fn getPos(self: *const Self) !u64 {
         return switch (self.type) {
-            .File => self.file_reader.?.readUntilDelimiterOrEof(buf, delimiter),
-            .Memory => self.mem_reader.?.readUntilDelimiterOrEof(buf, delimiter),
+            .File   => self.file.?.getPos(),
+            .Memory => self.mem.?.getPos(),
+        };
+    }
+
+    pub fn seekTo(self: *const Self, pos: u64) !void {
+        return switch (self.type) {
+            .File   => self.file.?.seekTo(pos),
+            .Memory => self.mem.?.seekTo(pos),
+        };
+    }
+
+    pub fn read(self: *const Self, buffer: []u8) ![]u8 {
+        var count = switch (self.type) {
+            .File   => try self.file.?.reader().read(buffer),
+            .Memory => try self.mem.?.reader().read(buffer),
+        };
+        return buffer[0..count];
+    }
+
+    pub fn readUntilDelimiterOrEof(self: *const Self, buf: []u8, delimiter: u8) !?[]u8 {
+        return switch (self.type) {
+            .File   => self.file.?.reader().readUntilDelimiterOrEof(buf, delimiter),
+            .Memory => self.mem.?.reader().readUntilDelimiterOrEof(buf, delimiter),
+        };
+    }
+
+    pub fn readUntilDelimiterOrEofAlloc(self: *const Self, allocator: std.mem.Allocator, delimiter: u8, max_size: usize) !?[]u8 {
+        return switch (self.type) {
+            .File   => self.file.?.reader().readUntilDelimiterOrEofAlloc(allocator, delimiter, max_size),
+            .Memory => self.mem.?.reader().readUntilDelimiterOrEofAlloc(allocator, delimiter, max_size),
         };
     }
 };

@@ -1,7 +1,7 @@
 const std = @import("std");
 const print = std.debug.print;
 const expect = std.testing.expect;
-const Reader = @import("aoc").Reader;
+const aoc = @import("aoc");
 
 const int = i64;
 
@@ -10,9 +10,9 @@ const Range = struct {
     max: int,
 };
 
-fn getRanges(reader: *Reader) ?struct{Range, Range} {
+fn getRanges(stream: aoc.Stream) ?struct{Range, Range} {
     var buf: [256]u8 = undefined;
-    if (reader.*.readUntilDelimiterOrEof(&buf, '\n')) |raw_line| {
+    if (stream.readUntilDelimiterOrEof(&buf, '\n')) |raw_line| {
         var line = raw_line orelse return null;
         var i: usize = 0;
         var pieces: [4][] const u8 = undefined;
@@ -48,11 +48,11 @@ fn computePart2(r1: Range, r2: Range) int {
 
 pub fn main() !void {
     var in_stream = std.io.getStdIn();
-    var reader = Reader.initFile(&in_stream);
+    var stream = aoc.Stream.initFile(&in_stream);
 
     var part1: int = 0;
     var part2: int = 0;
-    while (getRanges(&reader)) |ranges| {
+    while (getRanges(stream)) |ranges| {
         part1 += computePart1(ranges[0], ranges[1]);
         part2 += computePart2(ranges[0], ranges[1]);
     }
@@ -70,11 +70,11 @@ test {
         \\2-6,4-8
     ;
     var mem_stream = std.io.fixedBufferStream(test_data);
-    var reader = Reader.initMem(&mem_stream);
+    var stream = aoc.Stream.initMem(&mem_stream);
 
     var part1: int = 0;
     var part2: int = 0;
-    while (getRanges(&reader)) |ranges| {
+    while (getRanges(stream)) |ranges| {
         part1 += computePart1(ranges[0], ranges[1]);
         part2 += computePart2(ranges[0], ranges[1]);
     }
