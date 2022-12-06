@@ -4,25 +4,21 @@ const aoc = @import("aoc");
 const expect = std.testing.expect;
 const print = std.debug.print;
 
-const Set = std.StaticBitSet(32);
+const Set = std.StaticBitSet(256);
 
-fn getPacketStart(comptime marker_size: usize, message: [] const u8) !usize {
+fn findFirstMarker(comptime marker_size: usize, message: [] const u8) !usize {
+    comptime try expect(marker_size > 0 and marker_size <= Set.bit_length);
     try expect(message.len > marker_size);
-    try expect(marker_size > 0 and marker_size <= Set.bit_length);
 
     var set = Set.initEmpty();
 
-    for (message[0..marker_size]) |ch| {
-        set.set(ch - 'a');
-    }
+    for (message[0..marker_size]) |ch| set.set(ch);
     if (set.count() == marker_size) return 4;
 
     var idx: usize = 1;
     while (idx < message.len - marker_size + 1) : (idx += 1) {
-        set.unset(message[idx - 1] - 'a');
-        for (message[idx..idx + marker_size]) |ch| {
-            set.set(ch - 'a');
-        }
+        set.unset(message[idx - 1]);
+        for (message[idx..idx + marker_size]) |ch| set.set(ch);
         if (set.count() == marker_size) return idx + marker_size;
     }
 
@@ -37,8 +33,8 @@ pub fn main() !void {
     if (stream.readUntilDelimiterOrEof(&buf, '\n')) |raw_data| {
         var data = raw_data orelse return error.InvalidInput;
 
-        var part1 = try getPacketStart(4, data);
-        var part2 = try getPacketStart(14, data);
+        var part1 = try findFirstMarker(4, data);
+        var part2 = try findFirstMarker(14, data);
 
         print("{}\n{}\n", .{part1, part2});
     } else |err| {
@@ -57,8 +53,8 @@ test {
     };
 
     for (test_data) |data| {
-        var pkt = try getPacketStart(4, data.str);
-        var msg = try getPacketStart(14, data.str);
+        var pkt = try findFirstMarker(4, data.str);
+        var msg = try findFirstMarker(14, data.str);
         try expect(pkt == data.pkt);
         try expect(msg == data.msg);
     }
