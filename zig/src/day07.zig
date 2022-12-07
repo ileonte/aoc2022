@@ -10,7 +10,7 @@ const REQUIRED_UNUSED: usize = 30000000;
 const Cwd = aoc.Stack(128, []const u8);
 const Dirs = std.StringHashMap(usize);
 
-fn getCwdName(cwd: Cwd, buf: []u8) []u8 {
+fn getCwdName(cwd: Cwd, buf: []u8) [] const u8 {
     var len: usize = 0;
     var idx: usize = 0;
 
@@ -35,9 +35,9 @@ fn getCwdName(cwd: Cwd, buf: []u8) []u8 {
 fn addFile(dirs: Dirs, cwd: Cwd, file_size: usize) !void {
     var my_cwd = cwd.clone();
     var cwd_buf: [512]u8 = undefined;
-    var cwd_str: []u8 = getCwdName(my_cwd, &cwd_buf);
+    var cwd_str = getCwdName(my_cwd, &cwd_buf);
 
-    while (my_cwd.size() > 0) {
+    while (!my_cwd.isEmpty()) {
         var val_ptr = dirs.getPtr(cwd_str) orelse return error.InvalidInput;
         val_ptr.* += file_size;
 
@@ -49,7 +49,6 @@ fn addFile(dirs: Dirs, cwd: Cwd, file_size: usize) !void {
 pub fn traverse(data: [] const u8) !struct{usize, usize} {
     var cwd = Cwd.init();
     var cwd_buf: [512]u8 = undefined;
-    var cwd_str: []u8 = undefined;
     var it = std.mem.tokenize(u8, data, "\n");
 
     var dirs = Dirs.init(std.heap.page_allocator);
@@ -59,20 +58,14 @@ pub fn traverse(data: [] const u8) !struct{usize, usize} {
         var line = raw_line;
         if (std.mem.startsWith(u8, line, "$ ")) {
             line = line[2..];
-            if (std.mem.startsWith(u8, line, "cd ")) {
-                line = line[3..];
+            if (!std.mem.startsWith(u8, line, "cd ")) continue;
 
-                if (std.mem.eql(u8, line, "..")) {
-                    try cwd.pop();
-                } else {
-                    try cwd.push(line);
-                }
+            line = line[3..];
+            if (std.mem.eql(u8, line, "..")) try cwd.pop()
+            else try cwd.push(line);
 
-                cwd_str = getCwdName(cwd, &cwd_buf);
-                if (!dirs.contains(cwd_str)) {
-                    try dirs.put(cwd_str, 0);
-                }
-            }
+            var cwd_str = getCwdName(cwd, &cwd_buf);
+            if (!dirs.contains(cwd_str)) try dirs.put(cwd_str, 0);
         } else {
             if (line.len > 0 and line[0] >= '0' and line[0] <= '9') {
                 var line_it = std.mem.tokenize(u8, line, " ");
