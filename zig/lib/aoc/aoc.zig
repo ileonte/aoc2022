@@ -63,4 +63,11 @@ pub const Stream = struct {
             .Memory => self.mem.?.reader().readUntilDelimiterOrEofAlloc(allocator, delimiter, max_size),
         };
     }
+
+    pub fn readAll(self: *const Self, buf: []u8) !usize {
+        return switch (self.type) {
+            .File   => self.file.?.readAll(buf),
+            .Memory => self.mem.?.read(buf),
+        };
+    }
 };
