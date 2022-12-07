@@ -7,49 +7,7 @@ const print = std.debug.print;
 const FILESISTEM_SIZE: usize = 70000000;
 const REQUIRED_UNUSED: usize = 30000000;
 
-fn Stack(comptime max_size: usize, comptime T: type) type {
-    comptime try expect(max_size > 0);
-
-    return struct {
-        const Self = @This();
-        const capacity = max_size;
-        const item_type = T;
-
-        data: [capacity]item_type,
-        view: []item_type,
-
-        pub fn init() Self {
-            var ret: Self = undefined;
-            ret.view = ret.data[0..0];
-            return ret;
-        }
-
-        pub fn size(self: Self) usize {
-            return self.view.len;
-        }
-
-        pub fn push(self: *Self, item: item_type) !void {
-            if (self.view.len >= capacity) return error.OutOfSpace;
-            self.data[self.view.len] = item;
-            self.view = self.data[0..self.view.len + 1];
-        }
-
-        pub fn pop(self: *Self) !item_type {
-            if (self.view.len == 0) return error.NoMoreItems;
-            self.view = self.data[0..self.view.len - 1];
-            return self.data[self.view.len];
-        }
-
-        pub fn clone(self: Self) Self {
-            var ret: Self = undefined;
-            ret.data = self.data;
-            ret.view = ret.data[0..self.view.len];
-            return ret;
-        }
-    };
-}
-
-const Cwd = Stack(128, []const u8);
+const Cwd = aoc.Stack(128, []const u8);
 const Dirs = std.StringHashMap(usize);
 
 fn getCwdName(cwd: Cwd, buf: []u8) []u8 {
@@ -77,13 +35,14 @@ fn getCwdName(cwd: Cwd, buf: []u8) []u8 {
 fn addFile(dirs: Dirs, cwd: Cwd, file_size: usize) !void {
     var my_cwd = cwd.clone();
     var cwd_buf: [512]u8 = undefined;
-    var cwd_str: []u8 = undefined;
+    var cwd_str: []u8 = getCwdName(my_cwd, &cwd_buf);
 
     while (my_cwd.size() > 0) {
-        cwd_str = getCwdName(my_cwd, &cwd_buf);
         var val_ptr = dirs.getPtr(cwd_str) orelse return error.InvalidInput;
         val_ptr.* += file_size;
-        _ = try my_cwd.pop();
+
+        var popped = try my_cwd.popVal();
+        cwd_str = cwd_str[0..cwd_str.len - popped.len - @boolToInt(!my_cwd.isEmpty())];
     }
 }
 
@@ -104,7 +63,7 @@ pub fn traverse(data: [] const u8) !struct{usize, usize} {
                 line = line[3..];
 
                 if (std.mem.eql(u8, line, "..")) {
-                    _ = try cwd.pop();
+                    try cwd.pop();
                 } else {
                     try cwd.push(line);
                 }

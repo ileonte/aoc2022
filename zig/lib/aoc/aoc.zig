@@ -71,3 +71,54 @@ pub const Stream = struct {
         };
     }
 };
+
+pub fn Stack(comptime max_size: usize, comptime T: type) type {
+    comptime try std.testing.expect(max_size > 0);
+
+    return struct {
+        const Self = @This();
+        const capacity = max_size;
+        const item_type = T;
+
+        data: [capacity]item_type,
+        view: []item_type,
+
+        pub fn init() Self {
+            var ret: Self = undefined;
+            ret.view = ret.data[0..0];
+            return ret;
+        }
+
+        pub fn size(self: *const Self) usize {
+            return self.view.len;
+        }
+
+        pub fn isEmpty(self: *const Self) bool {
+            return self.view.len == 0;
+        }
+
+        pub fn push(self: *Self, item: item_type) !void {
+            if (self.view.len >= capacity) return error.OutOfSpace;
+            self.data[self.view.len] = item;
+            self.view = self.data[0..self.view.len + 1];
+        }
+
+        pub fn pop(self: *Self) !void {
+            if (self.view.len == 0) return error.NoMoreItems;
+            self.view = self.data[0..self.view.len - 1];
+        }
+
+        pub fn popVal(self: *Self) !item_type {
+            if (self.view.len == 0) return error.NoMoreItems;
+            self.view = self.data[0..self.view.len - 1];
+            return self.data[self.view.len];
+        }
+
+        pub fn clone(self: *const Self) Self {
+            var ret: Self = undefined;
+            ret.data = self.data;
+            ret.view = ret.data[0..self.view.len];
+            return ret;
+        }
+    };
+}
