@@ -40,6 +40,7 @@ const Position = struct {
             return it.current;
         }
     };
+
     pub fn moveTo(self: Position, move: [] const u8) !DistanceMoveIterator {
         try expect(move.len >= 3);
         try expect(move[1] == ' ');
@@ -134,6 +135,7 @@ test "simple" {
     var stream = aoc.Stream.initMem(&in_stream);
     var ret = try compute(stream);
     try expect(ret[0] == 13);
+    try expect(ret[1] == 1);
 }
 
 test "complex" {
