@@ -28,18 +28,19 @@ const Position = struct {
         return self.x == other.x and self.y == other.y;
     }
 
-    const MoveIterator = struct {
+    const DistanceMoveIterator = struct {
         current: Position,
         desired: Position,
+        distance: u16,
 
-        pub fn next(it: *MoveIterator) ?Position {
-            if (it.current.eql(it.desired)) return null;
-            it.*.current.x += std.math.sign(it.desired.x - it.current.x);
-            it.*.current.y += std.math.sign(it.desired.y - it.current.y);
+        pub fn next(it: *DistanceMoveIterator) ?Position {
+            if (it.current.distanceTo(it.desired) <= it.distance) return null;
+            it.current.x += std.math.sign(it.desired.x - it.current.x);
+            it.current.y += std.math.sign(it.desired.y - it.current.y);
             return it.current;
         }
     };
-    pub fn moveTo(self: Position, move: [] const u8) !MoveIterator {
+    pub fn moveTo(self: Position, move: [] const u8) !DistanceMoveIterator {
         try expect(move.len >= 3);
         try expect(move[1] == ' ');
         var count = try std.fmt.parseInt(i16, move[2..], 0);
@@ -53,24 +54,13 @@ const Position = struct {
             else => return error.InvalidInput,
         }
 
-        return MoveIterator {
+        return DistanceMoveIterator {
             .current = self,
             .desired = desired,
+            .distance = 0,
         };
     }
 
-    const DistanceMoveIterator = struct {
-        current: Position,
-        desired: Position,
-        distance: u16,
-
-        pub fn next(it: *DistanceMoveIterator) ?Position {
-            if (it.current.distanceTo(it.desired) <= it.distance) return null;
-            it.*.current.x += std.math.sign(it.desired.x - it.current.x);
-            it.*.current.y += std.math.sign(it.desired.y - it.current.y);
-            return it.current;
-        }
-    };
     pub fn moveTowards(self: Position, target: Position, min_distance: u16) DistanceMoveIterator {
         return DistanceMoveIterator {
             .current = self,
