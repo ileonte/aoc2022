@@ -106,3 +106,7 @@ pub fn Stack(comptime max_size: usize, comptime T: type) type {
         }
     };
 }
+
+pub fn trim(val: []const u8) []const u8 {
+    return std.mem.trim(u8, val, " \n\r\t");
+}
