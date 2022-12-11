@@ -13,6 +13,7 @@ runTests() {
     ${BASE}/zig-out/bin/day08 < ${BASE}/../inputs/day08.txt
     ${BASE}/zig-out/bin/day09 < ${BASE}/../inputs/day09.txt
     ${BASE}/zig-out/bin/day10 < ${BASE}/../inputs/day10.txt
+    ${BASE}/zig-out/bin/day11 < ${BASE}/../inputs/day11.txt
 }
 
 time runTests
